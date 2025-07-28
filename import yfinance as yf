@@ -1,0 +1,65 @@
+import yfinance as yf
+import pandas as pd
+import streamlit as st
+from prophet import Prophet
+
+def validate_prophet_df(df):
+    if not isinstance(df, pd.DataFrame):
+        return False, "Not a DataFrame"
+    if df.empty:
+        return False, "DataFrame is empty"
+    if 'ds' not in df.columns or 'y' not in df.columns:
+        return False, "Missing 'ds' or 'y' columns"
+    if not pd.api.types.is_datetime64_any_dtype(df['ds']):
+        return False, "'ds' column is not datetime"
+    if not pd.api.types.is_numeric_dtype(df['y']):
+        return False, "'y' column is not numeric"
+    if df[['ds', 'y']].isna().any().any():
+        return False, "NaN values in 'ds' or 'y'"
+    return True, "OK"
+
+ticker = "AAPL"
+df = yf.download(ticker, period="1y")
+
+# Check if data was downloaded successfully
+if df.empty or df.isna().all().all():
+    st.error(f"Failed to download data for {ticker}. Please check your internet connection or ticker symbol.")
+else:
+    # Reset index and ensure date column is present
+    df = df.reset_index()
+    # Find the date column (could be 'Date' or 'Datetime' or just index)
+    date_col = None
+    for col in ['Date', 'Datetime']:
+        if col in df.columns:
+            date_col = col
+            break
+    if date_col is None:
+        # If no date column, use the index as date
+        df['ds'] = df.index
+        date_col = 'ds'
+
+    # Now check for 'Close' and the date column
+    if date_col in df.columns and 'Close' in df.columns:
+        df_train = df[[date_col, 'Close']].rename(columns={date_col: 'ds', 'Close': 'y'})
+        df_train['ds'] = pd.to_datetime(df_train['ds'], errors='coerce')
+        df_train['y'] = pd.to_numeric(df_train['y'], errors='coerce')
+        df_train = df_train.dropna(subset=['ds', 'y'])
+    else:
+        st.error("Downloaded data does not contain required columns.")
+        df_train = pd.DataFrame()
+
+    # Debugging output
+    st.write("df_train preview:", df_train.head())
+    st.write("df_train columns:", df_train.columns)
+    st.write("df_train shape:", df_train.shape)
+    st.write("df_train types:", df_train.dtypes)
+
+    is_valid, msg = validate_prophet_df(df_train)
+    if not is_valid:
+        st.error(f"Training data is invalid for Prophet: {msg}")
+    else:
+        st.success("df_train is valid. Fitting Prophet model...")
+        # Fit Prophet model
+        m = Prophet()
+        m.fit(df_train)
+        # ...rest of your Streamlit/Prophet code
