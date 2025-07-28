@@ -25,14 +25,20 @@ Follow these steps to get the app up and running locally:
 
 ```bash
 git clone https://github.com/Devansh015/pyPredictor.git
+```
+
+### 2. Cd into project folder
+```bash
 
 cd pyPredictor
+```
 
-2. Install Dependencies
-Make sure you have Python 3.8 or later installed. Then run:
+### 3. Install Dependencies
 
+```bash
 pip install streamlit prophet yfinance plotly
-
-Run with
-
+```
+### 4. Run with
+```bash
 streamlit run app.py
+```
