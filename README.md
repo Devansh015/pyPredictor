@@ -1,7 +1,5 @@
 # 📊 Stock Forecast App
 
-A simple and interactive **Stock Forecasting Web App**.
-
 ## Features
 
 -  Select from a list of major stocks (GOOG, AAPL, MSFT, GME)
